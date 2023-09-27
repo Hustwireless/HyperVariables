@@ -71,7 +71,13 @@ class SE3Tests
 
   [[nodiscard]] auto checkGroupExponentials() const -> bool {
     const auto se3 = se3_.toTangent().toManifold();
-    return se3.isApprox(se3_, kNumericTolerance);
+    SE3<Scalar> se3_flip;
+    se3_flip.rotation().x() = -se3_.rotation().x();
+    se3_flip.rotation().y() = -se3_.rotation().y();
+    se3_flip.rotation().z() = -se3_.rotation().z();
+    se3_flip.rotation().w() = -se3_.rotation().w();
+    se3_flip.translation() = se3_.translation();
+    return se3.isApprox(se3_, kNumericTolerance) || se3.isApprox(se3_flip, kNumericTolerance);
   }
 
   [[nodiscard]] auto checkGroupExponentialsJacobians(const bool global, const bool coupled) const -> bool {
@@ -86,7 +92,14 @@ class SE3Tests
       J_e_n.col(j) = NumericGroupMinus(d_tangent.toManifold(), se3_, global, coupled);
     }
 
-    return se3.isApprox(se3_, kNumericTolerance) &&
+    SE3<Scalar> se3_flip;
+    se3_flip.rotation().x() = -se3_.rotation().x();
+    se3_flip.rotation().y() = -se3_.rotation().y();
+    se3_flip.rotation().z() = -se3_.rotation().z();
+    se3_flip.rotation().w() = -se3_.rotation().w();
+    se3_flip.translation() = se3_.translation();
+
+    return (se3.isApprox(se3_, kNumericTolerance) || se3.isApprox(se3_flip, kNumericTolerance)) &&
            (J_l_a * J_e_a).isIdentity(kNumericTolerance) &&
            J_l_n.isApprox(J_l_a, kNumericTolerance) &&
            J_e_n.isApprox(J_e_a, kNumericTolerance);

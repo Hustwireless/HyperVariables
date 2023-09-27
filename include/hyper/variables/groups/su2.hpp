@@ -418,11 +418,33 @@ auto SU2Base<TDerived>::vectorPlus(const Eigen::MatrixBase<TOtherDerived_>& v, S
   return output;
 }
 
+// original groupLog
+// template <typename TDerived>
+// auto SU2Base<TDerived>::groupLog() const -> Algebra<SU2<Scalar>> {
+//   const auto v = this->vec();
+//   const auto w = this->w();
+//   const auto w2 = w * w;
+
+//   const auto nv2 = v.squaredNorm();
+//   const auto nv = std::sqrt(nv2);
+
+//   const auto nq2 = nv2 + w2;
+//   const auto nq = std::sqrt(nq2);
+
+//   DLOG_IF(FATAL, nq < Eigen::NumTraits<Scalar>::epsilon()) << "Quaternion norm is zero.";
+//   const auto a = (nv < Eigen::NumTraits<Scalar>::epsilon()) ? (Scalar{1} / nq + Scalar{1 / (6 * nq * nq2)} * (nq2 - w2)) : (std::atan2(nv, w) / nv);
+//   const auto av = (a * v).eval();
+
+//   return {Scalar{0}, av.x(), av.y(), av.z()};
+// }
+
+// modified groupLog
 template <typename TDerived>
 auto SU2Base<TDerived>::groupLog() const -> Algebra<SU2<Scalar>> {
   const auto v = this->vec();
   const auto w = this->w();
   const auto w2 = w * w;
+  const auto nw = std::sqrt(w2);
 
   const auto nv2 = v.squaredNorm();
   const auto nv = std::sqrt(nv2);
@@ -431,11 +453,34 @@ auto SU2Base<TDerived>::groupLog() const -> Algebra<SU2<Scalar>> {
   const auto nq = std::sqrt(nq2);
 
   DLOG_IF(FATAL, nq < Eigen::NumTraits<Scalar>::epsilon()) << "Quaternion norm is zero.";
-  const auto a = (nv < Eigen::NumTraits<Scalar>::epsilon()) ? (Scalar{1} / nq + Scalar{1 / (6 * nq * nq2)} * (nq2 - w2)) : (std::atan2(nv, w) / nv);
+  const auto a = (nv < Eigen::NumTraits<Scalar>::epsilon()) ? (Scalar{1} / nq + Scalar{1 / (6 * nq * nq2)} * (nq2 - w2)) : (w/nw) * (std::atan2(nv, nw) / nv);
   const auto av = (a * v).eval();
 
   return {Scalar{0}, av.x(), av.y(), av.z()};
 }
+
+// // modified groupLog
+// // https://github.com/strasdat/Sophus/blob/d270df2be6e46501b1e7efc09b107517e0be0645/sophus/so3.hpp#L295C7-L307C6
+// template <typename TDerived>
+// auto SU2Base<TDerived>::groupLog() const -> Algebra<SU2<Scalar>> {
+//   const auto v = this->vec();
+//   const auto w = this->w();
+//   const auto w2 = w * w;
+
+//   const auto nv2 = v.squaredNorm();
+//   const auto nv = std::sqrt(nv2);
+
+//   const auto nq2 = nv2 + w2;
+//   const auto nq = std::sqrt(nq2);
+
+//   DLOG_IF(FATAL, nq < Eigen::NumTraits<Scalar>::epsilon()) << "Quaternion norm is zero.";
+//   const auto a = 
+//         (nv < Eigen::NumTraits<Scalar>::epsilon()) ? 
+//               (Scalar{1} / nq + Scalar{1 / (6 * nq * nq2)} * (nq2 - w2)) : (( (w < Scalar{0}) ? std::atan2(-nv, -w) : std::atan2(nv, w) ) / nv);
+//   const auto av = (a * v).eval();
+
+//   return {Scalar{0}, av.x(), av.y(), av.z()};
+// }
 
 template <typename TDerived>
 auto SU2Base<TDerived>::groupExp() const -> Quaternion<Scalar> {
